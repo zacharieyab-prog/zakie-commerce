@@ -8,7 +8,12 @@
   try { state = { ...starter, ...JSON.parse(localStorage.getItem(KEY)) }; } catch { state = starter; }
   const save = () => localStorage.setItem(KEY, JSON.stringify(state));
   const toast = (message) => { $("toast").textContent = message; $("toast").classList.add("show"); setTimeout(() => $("toast").classList.remove("show"), 2200); };
-  const productById = (id) => state.products.find((p) => p.id === id);
+  const productById = (id) => state.products.find((p) => p.id === id);\n  let cloudClient = null, cloudUser = null, cloudApprovals = null;
+  const cloudConfigKey = "zaki-commerce-supabase-config-v1";
+  const typeLabels = { product_catalogue:"Product / catalogue proposal", supplier_contact:"Supplier contact", customer_commitment:"Customer commitment", order_fulfilment:"Order / fulfilment", payment_purchase:"Payment / purchase", subscription_service:"Subscription / service", marketing_advertising:"Marketing / advertising", other:"Other" };
+  const labelTypes = Object.fromEntries(Object.entries(typeLabels).map(([key, value]) => [value, key]));
+  const approvalItems = () => cloudApprovals === null ? state.approvals : cloudApprovals;
+
 
   function render() {
     const paid = state.orders.filter((o) => o.payment === "paid");
@@ -30,14 +35,96 @@
       `<tr><td><b>${esc(o.reference || o.id)}</b><small class="muted"><br>${new Date(o.createdAt).toLocaleDateString("en-ZA")}</small></td><td>${esc(o.name)} × ${o.qty}</td><td>${money(o.price * o.qty)}</td><td><span class="pill ${o.payment === "paid" ? "pill-paid" : "pill-pending"}">${o.payment === "paid" ? "Paid" : "Pending"}</span></td><td><button class="text-button" data-toggle-order="${o.id}">${o.payment === "paid" ? "Mark pending" : "Mark paid"}</button></td></tr>`
     ).join("") : '<tr><td colspan="5" class="empty">No orders recorded yet.</td></tr>';
 
-    $("actionQueue").innerHTML = state.approvals.length ? [...state.approvals].reverse().map((a) =>
-      `<div class="spend-item"><div><b>${esc(a.type)}</b><small>${esc(a.details)} · Requested ${new Date(a.createdAt).toLocaleDateString("en-ZA")}</small></div><div class="spend-actions"><span class="pill ${a.status === "approved" ? "pill-approved" : a.status === "rejected" ? "pill-rejected" : "pill-pending"}">${a.status === "pending" ? "Awaiting decision" : a.status === "approved" ? "Approved locally · not executed" : "Rejected"}</span>${a.status === "pending" ? `<button class="text-button" data-action-approve="${a.id}">Approve</button><button class="text-button" data-action-reject="${a.id}">Reject</button>` : ""}</div></div>`
+    $("actionQueue").innerHTML = approvalItems().length ? [...approvalItems()].reverse().map((a) =>
+      `<div class="spend-item"><div><b>${esc(a.type || typeLabels[a.action_type] || "Other")}</b><small>${esc(a.details)} · Requested ${new Date(a.createdAt || a.created_at).toLocaleDateString("en-ZA")}</small></div><div class="spend-actions"><span class="pill ${a.status === "approved" ? "pill-approved" : a.status === "rejected" ? "pill-rejected" : "pill-pending"}">${a.status === "pending" ? "Awaiting decision" : a.status === "approved" ? "Approved locally · not executed" : "Rejected"}</span>${a.status === "pending" ? `<button class="text-button" data-action-approve="${a.id}">Approve</button><button class="text-button" data-action-reject="${a.id}">Reject</button>` : ""}</div></div>`
     ).join("") : '<p class="empty">No action proposals.</p>';
 
     $("spendQueue").innerHTML = state.spending.length ? [...state.spending].reverse().map((s) =>
       `<div class="spend-item"><div><b>${esc(s.name)} · ${money(s.amount)}</b><small>${esc(s.reason || "No provider or reason added")} · Requested ${new Date(s.createdAt).toLocaleDateString("en-ZA")}</small></div><div class="spend-actions"><span class="pill ${s.status === "approved" ? "pill-approved" : s.status === "rejected" ? "pill-rejected" : "pill-pending"}">${s.status === "pending" ? "Awaiting your decision" : s.status === "approved" ? "Approved locally" : "Rejected"}</span>${s.status === "pending" ? `<button class="text-button" data-spend-approve="${s.id}">Approve</button><button class="text-button" data-spend-reject="${s.id}">Reject</button>` : ""}</div></div>`
     ).join("") : '<p class="empty">No spending requests. Nothing can be purchased from this dashboard.</p>';
   }
+
+  async function loadSupabaseSdk() {
+    if (window.supabase?.createClient) return window.supabase;
+    await new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+      script.onload = resolve;
+      script.onerror = () => reject(new Error("Could not load the Supabase client library."));
+      document.head.appendChild(script);
+    });
+    if (!window.supabase?.createClient) throw new Error("Supabase client library did not initialize.");
+    return window.supabase;
+  }
+  function cloudStatus(message) { $("cloudStatus").textContent = message; }
+  async function refreshCloudQueue() {
+    if (!cloudClient || !cloudUser) return;
+    const { data, error } = await cloudClient.from("approval_queue").select("*").order("created_at", { ascending: false });
+    if (error) throw error;
+    cloudApprovals = data || [];
+    $("cloudSignOutBtn").classList.remove("hidden");
+    cloudStatus("Private queue connected for " + cloudUser.email + ". Local proposals are not uploaded automatically.");
+    render();
+  }
+  async function connectCloud(config) {
+    const sdk = await loadSupabaseSdk();
+    cloudClient = sdk.createClient(config.url, config.key);
+    const { data, error } = await cloudClient.auth.getSession();
+    if (error) throw error;
+    cloudUser = data.session?.user || null;
+    if (cloudUser) await refreshCloudQueue();
+    else {
+      cloudApprovals = null;
+      $("cloudSignOutBtn").classList.add("hidden");
+      cloudStatus("Project saved on this browser. Sign in with your email link to open its private approval queue.");
+      render();
+    }
+    cloudClient.auth.onAuthStateChange((_event, session) => {
+      cloudUser = session?.user || null;
+      if (cloudUser) refreshCloudQueue().catch((err) => cloudStatus("Queue could not load: " + err.message));
+      else { cloudApprovals = null; $("cloudSignOutBtn").classList.add("hidden"); render(); }
+    });
+  }
+  $("cloudConfigForm").onsubmit = async (event) => {
+    event.preventDefault();
+    const url = $("cloudUrl").value.trim().replace(/\/$/, "");
+    const key = $("cloudKey").value.trim();
+    try {
+      if (new URL(url).protocol !== "https:") throw new Error("Use the HTTPS project URL.");
+      if (key.startsWith("sb_secret_") || key.includes("service_role")) throw new Error("Secret and service-role keys are blocked. Use the publishable key.");
+      if (!(key.startsWith("sb_publishable_") || key.startsWith("eyJ"))) throw new Error("Enter a Supabase publishable key (or legacy anon key).");
+      const config = { url, key };
+      localStorage.setItem(cloudConfigKey, JSON.stringify(config));
+      await connectCloud(config);
+      toast("Private project saved on this browser.");
+    } catch (err) { cloudStatus(err.message); }
+  };
+  $("cloudSignInForm").onsubmit = async (event) => {
+    event.preventDefault();
+    try {
+      const config = JSON.parse(localStorage.getItem(cloudConfigKey) || "null");
+      if (!config) throw new Error("Save your project URL and publishable key first.");
+      if (!cloudClient) await connectCloud(config);
+      const { error } = await cloudClient.auth.signInWithOtp({
+        email: $("cloudEmail").value.trim(),
+        options: { shouldCreateUser: true, emailRedirectTo: window.location.origin + window.location.pathname }
+      });
+      if (error) throw error;
+      cloudStatus("Sign-in link sent. Open it yourself; no code is needed in this chat.");
+    } catch (err) { cloudStatus(err.message); }
+  };
+  $("cloudSignOutBtn").onclick = async () => {
+    if (cloudClient) await cloudClient.auth.signOut();
+    cloudUser = null; cloudApprovals = null; render();
+    cloudStatus("Signed out. Your cloud proposals remain in your Supabase project.");
+  };
+  (async () => {
+    const config = JSON.parse(localStorage.getItem(cloudConfigKey) || "null");
+    if (config) {
+      $("cloudUrl").value = config.url; $("cloudKey").value = config.key;
+      try { await connectCloud(config); } catch (err) { cloudStatus("Connection not ready: " + err.message); }
+    }
+  })();
 
   $("addProductBtn").onclick = () => $("productForm").classList.remove("hidden");
   $("cancelProductBtn").onclick = () => $("productForm").classList.add("hidden");
@@ -57,10 +144,18 @@
     const order = { id: crypto.randomUUID(), reference: $("orderReference").value.trim(), name: product.name, productId: product.id, price: product.price, cost: product.cost, qty, payment: $("orderPayment").value, createdAt: new Date().toISOString() };
     state.orders.push(order); product.stock = Math.max(0, product.stock - qty); save(); render(); event.target.reset(); $("orderQty").value = "1"; event.target.classList.add("hidden"); toast("Order recorded.");
   };
-  $("actionForm").onsubmit = (event) => {
+  $("actionForm").onsubmit = async (event) => {
     event.preventDefault();
-    state.approvals.push({ id: crypto.randomUUID(), type: $("actionType").value, details: $("actionDetails").value.trim(), status: "pending", createdAt: new Date().toISOString() });
-    save(); render(); event.target.reset(); toast("Proposal queued. Nothing was carried out.");
+    const type = $("actionType").value, details = $("actionDetails").value.trim();
+    if (cloudClient && cloudUser && cloudApprovals !== null) {
+      const { error } = await cloudClient.from("approval_queue").insert({ owner_id: cloudUser.id, action_type: labelTypes[type] || "other", details });
+      if (error) return cloudStatus("Proposal was not saved: " + error.message);
+      try { await refreshCloudQueue(); } catch (err) { cloudStatus("Proposal saved, but refresh failed: " + err.message); }
+    } else {
+      state.approvals.push({ id: crypto.randomUUID(), type, details, status: "pending", createdAt: new Date().toISOString() });
+      save(); render();
+    }
+    event.target.reset(); toast("Proposal queued. Nothing was carried out.");
   };
   $("spendForm").onsubmit = (event) => {
     event.preventDefault();
@@ -68,14 +163,23 @@
     if (!request.name || request.amount <= 0) return toast("Enter an expense and amount.");
     state.spending.push(request); save(); render(); event.target.reset(); toast("Request saved for your decision. No payment was made.");
   };
-  document.addEventListener("click", (event) => {
+  document.addEventListener("click", async (event) => {
     const remove = event.target.closest("[data-delete-product]");
     const actionApprove = event.target.closest("[data-action-approve]");
     const actionReject = event.target.closest("[data-action-reject]");
     if (actionApprove || actionReject) {
       const id = (actionApprove || actionReject).dataset[actionApprove ? "actionApprove" : "actionReject"];
-      const item = state.approvals.find((a) => a.id === id);
-      if (item && item.status === "pending") { item.status = actionApprove ? "approved" : "rejected"; save(); render(); toast(actionApprove ? "Decision recorded. Nothing was executed." : "Proposal rejected."); }
+      const status = actionApprove ? "approved" : "rejected";
+      if (cloudClient && cloudUser && cloudApprovals !== null) {
+        const { error } = await cloudClient.from("approval_queue").update({ status, decided_at: new Date().toISOString() }).eq("id", id).eq("status", "pending");
+        if (error) return cloudStatus("Decision was not saved: " + error.message);
+        try { await refreshCloudQueue(); } catch (err) { cloudStatus("Decision saved, but refresh failed: " + err.message); }
+      } else {
+        const item = state.approvals.find((a) => a.id === id);
+        if (item && item.status === "pending") { item.status = status; save(); render(); }
+      }
+      toast(actionApprove ? "Decision recorded. Nothing was executed." : "Proposal rejected. Nothing was executed.");
+      return;
     }
 
     const toggle = event.target.closest("[data-toggle-order]");
