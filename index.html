@@ -48,7 +48,17 @@
       </article>
     </section>
     <section class="panel approval-panel">
-      <div class="panel-head"><div><p class="eyebrow">OWNER CONTROL</p><h2>Spending approval</h2><p class="panel-copy">Zaki Commerce must never spend money, subscribe to a service, or launch paid advertising without your explicit approval.</p></div><span class="approval-badge">Approval required</span></div>
+      <div class="panel-head"><div><p class="eyebrow">OWNER CONTROL</p><h2>Action approval queue</h2><p class="panel-copy">Use this for products, supplier enquiries, customer messages, orders, subscriptions and other commitments. Approval records your decision only; it does not publish, send, order or pay.</p></div><span class="approval-badge">Nothing executes here</span></div>
+      <form id="actionForm" class="spend-form">
+        <label>Proposed action<select id="actionType" required><option>Product / catalogue proposal</option><option>Supplier contact</option><option>Customer commitment</option><option>Order / fulfilment</option><option>Payment / purchase</option><option>Subscription / service</option><option>Marketing / advertising</option><option>Other</option></select></label>
+        <label>Details<input id="actionDetails" required maxlength="240" placeholder="What is proposed? Include relevant cost or terms"></label>
+        <button class="button button-dark" type="submit">Add to approval queue</button>
+      </form>
+      <div id="actionQueue" class="spend-queue"><p class="empty">No action proposals.</p></div>
+      <p class="fine-print">Explicit approval is required before any real-world action or spending. This static demo cannot carry out or enforce external approvals.</p>
+    </section>
+    <section class="panel approval-panel">
+      <div class="panel-head"><div><p class="eyebrow">OWNER CONTROL</p><h2>Spending request log</h2><p class="panel-copy">A request is recorded here for review. Approval records a local decision only and never starts a subscription, purchase or advertisement.</p></div><span class="approval-badge">Approval required</span></div>
       <form id="spendForm" class="spend-form">
         <label>Proposed expense<input id="spendName" required maxlength="100" placeholder="e.g. Domain name renewal"></label>
         <label>Amount (R)<input id="spendAmount" required type="number" min="0.01" step="0.01" placeholder="0.00"></label>
@@ -56,7 +66,7 @@
         <button class="button button-dark" type="submit">Submit for my approval</button>
       </form>
       <div id="spendQueue" class="spend-queue"><p class="empty">No spending requests. Nothing can be purchased from this dashboard.</p></div>
-      <p class="fine-print">Requests are only recorded locally in this demo. Approving here does not make a payment or authorize an external service.</p>
+      <p class="fine-print">Requests and decisions are stored only in this browser. No payment is made and no external action is authorized.</p>
     </section>
     <footer><span>© <span id="year"></span> Zaki Commerce</span><span>Prototype · Local browser storage · No payment processing</span></footer>
   </main>
