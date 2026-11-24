@@ -22,7 +22,7 @@ Products, orders and spending requests remain in browser storage. The action app
 
 ## Important limitations
 
-- This is a front-end prototype, not a production store.
+- This is a static front-end prototype with optional Supabase sync for the approval queue, not a production store.
 - It does not connect to suppliers, marketplaces, couriers, banks or payment gateways.
 - It does not process payments, place orders, send marketing, or purchase services.
 - The action queue records decisions in local storage or, when connected, Supabase. Approval does **not** publish a product, contact anyone, place an order, start a service, authorize an external action or trigger a payment.
