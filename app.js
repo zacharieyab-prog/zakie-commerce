@@ -106,8 +106,7 @@
   $("cloudSignInForm").onsubmit = async (event) => {
     event.preventDefault();
     try {
-      const config = JSON.parse(localStorage.getItem(cloudConfigKey) || "null");
-      if (!config) throw new Error("Save your project URL and publishable key first.");
+      const config = getCloudConfig();
       if (!cloudClient) await connectCloud(config);
       const { error } = await cloudClient.auth.signInWithOtp({
         email: $("cloudEmail").value.trim(),
@@ -123,11 +122,9 @@
     cloudStatus("Signed out. Your cloud proposals remain in your Supabase project.");
   };
   (async () => {
-    const config = JSON.parse(localStorage.getItem(cloudConfigKey) || "null");
-    if (config) {
-      $("cloudUrl").value = config.url; $("cloudKey").value = config.key;
-      try { await connectCloud(config); } catch (err) { cloudStatus("Connection not ready: " + err.message); }
-    }
+    const config = getCloudConfig();
+    $("cloudUrl").value = config.url; $("cloudKey").value = config.key;
+    try { await connectCloud(config); } catch (err) { cloudStatus("Connection not ready: " + err.message); }
   })();
 
   $("addProductBtn").onclick = () => $("productForm").classList.remove("hidden");
