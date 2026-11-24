@@ -11,6 +11,9 @@
   const productById = (id) => state.products.find((p) => p.id === id);
   let cloudClient = null, cloudUser = null, cloudApprovals = null;
   const cloudConfigKey = "zaki-commerce-supabase-config-v1";
+  // Supabase publishable key is browser-safe with the approval_queue RLS policies enabled.
+  const builtInCloudConfig = { url: "https://thsmibzmlnfjjfnrieic.supabase.co", key: "sb_publishable_cDUrvXdkBd8DxSrawrdh9g_HGn60R8e" };
+  const getCloudConfig = () => JSON.parse(localStorage.getItem(cloudConfigKey) || "null") || builtInCloudConfig;
   const typeLabels = { product_catalogue:"Product / catalogue proposal", supplier_contact:"Supplier contact", customer_commitment:"Customer commitment", order_fulfilment:"Order / fulfilment", payment_purchase:"Payment / purchase", subscription_service:"Subscription / service", marketing_advertising:"Marketing / advertising", other:"Other" };
   const labelTypes = Object.fromEntries(Object.entries(typeLabels).map(([key, value]) => [value, key]));
   const approvalItems = () => cloudApprovals === null ? state.approvals : cloudApprovals;
