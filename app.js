@@ -3,9 +3,9 @@
   const $ = (id) => document.getElementById(id);
   const money = (value) => new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(Number(value || 0));
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const starter = { products: [], orders: [], spending: [] };
+  const starter = { products: [], orders: [], spending: [], approvals: [] };
   let state;
-  try { state = JSON.parse(localStorage.getItem(KEY)) || starter; } catch { state = starter; }
+  try { state = { ...starter, ...JSON.parse(localStorage.getItem(KEY)) }; } catch { state = starter; }
   const save = () => localStorage.setItem(KEY, JSON.stringify(state));
   const toast = (message) => { $("toast").textContent = message; $("toast").classList.add("show"); setTimeout(() => $("toast").classList.remove("show"), 2200); };
   const productById = (id) => state.products.find((p) => p.id === id);
@@ -30,6 +30,10 @@
       `<tr><td><b>${esc(o.reference || o.id)}</b><small class="muted"><br>${new Date(o.createdAt).toLocaleDateString("en-ZA")}</small></td><td>${esc(o.name)} × ${o.qty}</td><td>${money(o.price * o.qty)}</td><td><span class="pill ${o.payment === "paid" ? "pill-paid" : "pill-pending"}">${o.payment === "paid" ? "Paid" : "Pending"}</span></td><td><button class="text-button" data-toggle-order="${o.id}">${o.payment === "paid" ? "Mark pending" : "Mark paid"}</button></td></tr>`
     ).join("") : '<tr><td colspan="5" class="empty">No orders recorded yet.</td></tr>';
 
+    $("actionQueue").innerHTML = state.approvals.length ? [...state.approvals].reverse().map((a) =>
+      `<div class="spend-item"><div><b>${esc(a.type)}</b><small>${esc(a.details)} · Requested ${new Date(a.createdAt).toLocaleDateString("en-ZA")}</small></div><div class="spend-actions"><span class="pill ${a.status === "approved" ? "pill-approved" : a.status === "rejected" ? "pill-rejected" : "pill-pending"}">${a.status === "pending" ? "Awaiting decision" : a.status === "approved" ? "Approved locally · not executed" : "Rejected"}</span>${a.status === "pending" ? `<button class="text-button" data-action-approve="${a.id}">Approve</button><button class="text-button" data-action-reject="${a.id}">Reject</button>` : ""}</div></div>`
+    ).join("") : '<p class="empty">No action proposals.</p>';
+
     $("spendQueue").innerHTML = state.spending.length ? [...state.spending].reverse().map((s) =>
       `<div class="spend-item"><div><b>${esc(s.name)} · ${money(s.amount)}</b><small>${esc(s.reason || "No provider or reason added")} · Requested ${new Date(s.createdAt).toLocaleDateString("en-ZA")}</small></div><div class="spend-actions"><span class="pill ${s.status === "approved" ? "pill-approved" : s.status === "rejected" ? "pill-rejected" : "pill-pending"}">${s.status === "pending" ? "Awaiting your decision" : s.status === "approved" ? "Approved locally" : "Rejected"}</span>${s.status === "pending" ? `<button class="text-button" data-spend-approve="${s.id}">Approve</button><button class="text-button" data-spend-reject="${s.id}">Reject</button>` : ""}</div></div>`
     ).join("") : '<p class="empty">No spending requests. Nothing can be purchased from this dashboard.</p>';
@@ -53,6 +57,11 @@
     const order = { id: crypto.randomUUID(), reference: $("orderReference").value.trim(), name: product.name, productId: product.id, price: product.price, cost: product.cost, qty, payment: $("orderPayment").value, createdAt: new Date().toISOString() };
     state.orders.push(order); product.stock = Math.max(0, product.stock - qty); save(); render(); event.target.reset(); $("orderQty").value = "1"; event.target.classList.add("hidden"); toast("Order recorded.");
   };
+  $("actionForm").onsubmit = (event) => {
+    event.preventDefault();
+    state.approvals.push({ id: crypto.randomUUID(), type: $("actionType").value, details: $("actionDetails").value.trim(), status: "pending", createdAt: new Date().toISOString() });
+    save(); render(); event.target.reset(); toast("Proposal queued. Nothing was carried out.");
+  };
   $("spendForm").onsubmit = (event) => {
     event.preventDefault();
     const request = { id: crypto.randomUUID(), name: $("spendName").value.trim(), amount: Number($("spendAmount").value), reason: $("spendReason").value.trim(), status: "pending", createdAt: new Date().toISOString() };
@@ -61,6 +70,14 @@
   };
   document.addEventListener("click", (event) => {
     const remove = event.target.closest("[data-delete-product]");
+    const actionApprove = event.target.closest("[data-action-approve]");
+    const actionReject = event.target.closest("[data-action-reject]");
+    if (actionApprove || actionReject) {
+      const id = (actionApprove || actionReject).dataset[actionApprove ? "actionApprove" : "actionReject"];
+      const item = state.approvals.find((a) => a.id === id);
+      if (item && item.status === "pending") { item.status = actionApprove ? "approved" : "rejected"; save(); render(); toast(actionApprove ? "Decision recorded. Nothing was executed." : "Proposal rejected."); }
+    }
+
     const toggle = event.target.closest("[data-toggle-order]");
     const approve = event.target.closest("[data-spend-approve]");
     const reject = event.target.closest("[data-spend-reject]");
