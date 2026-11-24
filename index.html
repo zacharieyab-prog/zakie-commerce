@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>Zaki Commerce | South African commerce dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">Z</span><span>Zaki <b>Commerce</b><small>South African commerce workspace</small></span></a>
+    <div class="top-actions"><span class="status"><i></i> Local demo mode</span><button id="exportBtn" class="button button-quiet">Export data</button></div>
+  </header>
+  <main class="shell">
+    <section class="welcome">
+      <div><p class="eyebrow">YOUR COMMERCE CONTROL ROOM</p><h1>Build your store.<br><em>Keep control.</em></h1><p class="welcome-copy">A simple starting point for products, orders and business numbers. No paid services or spending are connected.</p></div>
+      <div class="welcome-card"><span class="welcome-icon">R</span><div><b>Rand-first workspace</b><p>Values are displayed in South African rand (ZAR).</p></div></div>
+    </section>
+    <section class="metrics" aria-label="Business summary">
+      <article class="metric"><span>Sales recorded</span><strong id="salesTotal">R0.00</strong><small>Based on orders marked paid</small></article>
+      <article class="metric"><span>Estimated product costs</span><strong id="costTotal">R0.00</strong><small>Cost × quantity on paid orders</small></article>
+      <article class="metric"><span>Estimated gross profit</span><strong id="profitTotal">R0.00</strong><small>Sales less recorded product costs</small></article>
+      <article class="metric"><span>Orders</span><strong id="orderCount">0</strong><small id="pendingCount">0 awaiting fulfilment</small></article>
+    </section>
+    <section class="grid">
+      <article class="panel">
+        <div class="panel-head"><div><p class="eyebrow">CATALOGUE</p><h2>Products</h2></div><button class="button button-primary" id="addProductBtn">＋ Add product</button></div>
+        <form id="productForm" class="inline-form hidden">
+          <label>Product name<input id="productName" required maxlength="80" placeholder="e.g. Everyday tote bag"></label>
+          <label>Selling price (R)<input id="productPrice" required type="number" min="0.01" step="0.01"></label>
+          <label>Unit cost (R)<input id="productCost" type="number" min="0" step="0.01" value="0"></label>
+          <label>Stock<input id="productStock" type="number" min="0" step="1" value="0"></label>
+          <div class="form-actions"><button class="button button-primary" type="submit">Save product</button><button class="button button-quiet" type="button" id="cancelProductBtn">Cancel</button></div>
+        </form>
+        <div class="table-wrap"><table><thead><tr><th>Product</th><th>Sell price</th><th>Unit cost</th><th>Stock</th><th></th></tr></thead><tbody id="productsBody"><tr><td colspan="5" class="empty">No products yet. Add your first product to start.</td></tr></tbody></table></div>
+      </article>
+      <article class="panel">
+        <div class="panel-head"><div><p class="eyebrow">FULFILMENT</p><h2>Orders</h2></div><button class="button button-primary" id="addOrderBtn">＋ Record order</button></div>
+        <form id="orderForm" class="inline-form hidden">
+          <label>Product<select id="orderProduct" required></select></label>
+          <label>Quantity<input id="orderQty" type="number" min="1" step="1" value="1" required></label>
+          <label>Customer reference<input id="orderReference" maxlength="60" placeholder="e.g. Order #1001"></label>
+          <label>Payment status<select id="orderPayment"><option value="pending">Payment pending</option><option value="paid">Paid</option></select></label>
+          <div class="form-actions"><button class="button button-primary" type="submit">Save order</button><button class="button button-quiet" type="button" id="cancelOrderBtn">Cancel</button></div>
+        </form>
+        <div class="table-wrap"><table><thead><tr><th>Order</th><th>Item</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody id="ordersBody"><tr><td colspan="5" class="empty">No orders recorded yet.</td></tr></tbody></table></div>
+      </article>
+    </section>
+    <section class="panel approval-panel">
+      <div class="panel-head"><div><p class="eyebrow">OWNER CONTROL</p><h2>Spending approval</h2><p class="panel-copy">Zaki Commerce must never spend money, subscribe to a service, or launch paid advertising without your explicit approval.</p></div><span class="approval-badge">Approval required</span></div>
+      <form id="spendForm" class="spend-form">
+        <label>Proposed expense<input id="spendName" required maxlength="100" placeholder="e.g. Domain name renewal"></label>
+        <label>Amount (R)<input id="spendAmount" required type="number" min="0.01" step="0.01" placeholder="0.00"></label>
+        <label>Reason / provider<input id="spendReason" maxlength="160" placeholder="What is this for?"></label>
+        <button class="button button-dark" type="submit">Submit for my approval</button>
+      </form>
+      <div id="spendQueue" class="spend-queue"><p class="empty">No spending requests. Nothing can be purchased from this dashboard.</p></div>
+      <p class="fine-print">Requests are only recorded locally in this demo. Approving here does not make a payment or authorize an external service.</p>
+    </section>
+    <footer><span>© <span id="year"></span> Zaki Commerce</span><span>Prototype · Local browser storage · No payment processing</span></footer>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
