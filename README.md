@@ -18,14 +18,14 @@ No build step or third-party dependency is required.
 1. Clone or download this repository.
 2. Open `index.html` in a modern browser.
 
-Data is stored in that browser's local storage. Use **Export data** to download a JSON backup.
+Products, orders and spending requests remain in browser storage. The action approval queue also stays local until you connect and sign in to Supabase. Use **Export data** to download a JSON backup.
 
 ## Important limitations
 
 - This is a front-end prototype, not a production store.
 - It does not connect to suppliers, marketplaces, couriers, banks or payment gateways.
 - It does not process payments, place orders, send marketing, or purchase services.
-- Approval queues only record local decisions; approval does **not** publish a product, contact anyone, place an order, start a service, authorize an external action or trigger a payment.
+- The action queue records decisions in local storage or, when connected, Supabase. Approval does **not** publish a product, contact anyone, place an order, start a service, authorize an external action or trigger a payment.
 - Product catalogue entries are local records only; there is no public product catalogue or checkout.
 - Do not enter sensitive customer, payment-card or identity information.
 
@@ -37,7 +37,7 @@ Add proposals to the action queue and review them before taking any real-world s
 
 A Supabase Postgres schema is prepared in `supabase/schema.sql`. It creates an authenticated, row-level-secured queue: each signed-in user can access only their own proposals. Approvals remain records only and have no external side effects.
 
-This schema is not connected to the static dashboard yet. To activate it, the owner must create a Supabase project, review and accept the provider's terms, apply the SQL, and configure the app with the project URL and public/publishable key. Never place a Supabase secret or service-role key in browser code. Authentication and queue UI wiring are still required before the browser-local queue becomes durable.
+The dashboard includes optional Supabase connection settings. To activate them, the owner must create a Supabase project, review and accept the provider's terms, apply this SQL, and enter the project URL and publishable key in the dashboard. Then use the email sign-in link. The email link goes directly from Supabase to the owner; no password or OTP is needed in this chat. Never place a Supabase secret or service-role key in browser code. Existing local proposals are not uploaded automatically.
 
 Supabase currently advertises a $0 Free plan with database and Auth quotas. Free projects may pause after one week of inactivity, and automatic backups are not included. Quotas and terms can change; remain on Free and keep spending at R0 unless the owner explicitly approves a paid plan. See [Supabase pricing](https://supabase.com/pricing) and [Row Level Security guidance](https://supabase.com/docs/guides/database/postgres/row-level-security).
 
