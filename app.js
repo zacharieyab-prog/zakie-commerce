@@ -93,7 +93,7 @@
     try {
       const parsedUrl = new URL(url);\n      if (parsedUrl.protocol !== "https:" || !parsedUrl.hostname.endsWith(".supabase.co")) throw new Error("Use your HTTPS Supabase project URL ending in supabase.co.");
       if (key.startsWith("sb_secret_") || key.includes("service_role")) throw new Error("Secret and service-role keys are blocked. Use the publishable key.");
-      if (!(key.startsWith("sb_publishable_") || key.startsWith("eyJ"))) throw new Error("Enter a Supabase publishable key (or legacy anon key).");
+      if (!key.startsWith("sb_publishable_")) throw new Error("Enter a Supabase publishable key. Secret keys are not accepted.");
       const config = { url, key };
       localStorage.setItem(cloudConfigKey, JSON.stringify(config));
       await connectCloud(config);
