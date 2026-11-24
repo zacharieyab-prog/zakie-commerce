@@ -8,7 +8,8 @@ A zero-budget South African e-commerce operations dashboard prototype. This proj
 - Order recording with paid/pending status
 - Sales, recorded product-cost and estimated gross-profit summaries
 - Local JSON data export
-- Spending request queue with explicit owner approval/rejection controls
+- General action approval queue for product, supplier, customer, fulfilment, marketing and purchase proposals
+- Spending request log with local approve/reject controls
 
 ## Run locally
 
@@ -24,8 +25,13 @@ Data is stored in that browser's local storage. Use **Export data** to download 
 - This is a front-end prototype, not a production store.
 - It does not connect to suppliers, marketplaces, couriers, banks or payment gateways.
 - It does not process payments, place orders, send marketing, or purchase services.
-- The spending approval interface only records a local decision; approval does **not** trigger a payment or external action.
+- Approval queues only record local decisions; approval does **not** publish a product, contact anyone, place an order, start a service, authorize an external action or trigger a payment.
+- Product catalogue entries are local records only; there is no public product catalogue or checkout.
 - Do not enter sensitive customer, payment-card or identity information.
+
+## Approval-first workflow
+
+Add proposals to the action queue and review them before taking any real-world step. An approval in this demo is a decision record only. There is no server-side user authentication or durable shared queue, so it cannot enforce permissions for other people or systems.
 
 ## Zero-budget / approval-first rule
 
