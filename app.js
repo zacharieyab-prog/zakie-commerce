@@ -8,7 +8,8 @@
   try { state = { ...starter, ...JSON.parse(localStorage.getItem(KEY)) }; } catch { state = starter; }
   const save = () => localStorage.setItem(KEY, JSON.stringify(state));
   const toast = (message) => { $("toast").textContent = message; $("toast").classList.add("show"); setTimeout(() => $("toast").classList.remove("show"), 2200); };
-  const productById = (id) => state.products.find((p) => p.id === id);\n  let cloudClient = null, cloudUser = null, cloudApprovals = null;
+  const productById = (id) => state.products.find((p) => p.id === id);
+  let cloudClient = null, cloudUser = null, cloudApprovals = null;
   const cloudConfigKey = "zaki-commerce-supabase-config-v1";
   const typeLabels = { product_catalogue:"Product / catalogue proposal", supplier_contact:"Supplier contact", customer_commitment:"Customer commitment", order_fulfilment:"Order / fulfilment", payment_purchase:"Payment / purchase", subscription_service:"Subscription / service", marketing_advertising:"Marketing / advertising", other:"Other" };
   const labelTypes = Object.fromEntries(Object.entries(typeLabels).map(([key, value]) => [value, key]));
