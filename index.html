@@ -48,6 +48,13 @@
       </article>
     </section>
     <section class="panel approval-panel">
+      <div class="panel-head"><div><p class="eyebrow">OPTIONAL PRIVATE SYNC</p><h2>Connect your approval queue</h2><p class="panel-copy">Connect a Supabase project to keep proposals across browsers. Only the signed-in account can access its own queue.</p></div><span class="approval-badge">R0 setup · owner controlled</span></div>
+      <form id="cloudConfigForm" class="spend-form"><label>Supabase project URL<input id="cloudUrl" type="url" required placeholder="https://your-project.supabase.co" autocomplete="url"></label><label>Publishable key<input id="cloudKey" type="password" required placeholder="sb_publishable_…" autocomplete="off"></label><button class="button button-dark" type="submit">Save private connection</button></form>
+      <form id="cloudSignInForm" class="spend-form"><label>Email for your sign-in link<input id="cloudEmail" type="email" required autocomplete="email"></label><button class="button button-primary" type="submit">Email me a sign-in link</button><button id="cloudSignOutBtn" class="button button-quiet hidden" type="button">Sign out</button></form>
+      <p id="cloudStatus" class="fine-print" role="status">Not connected. The queue stays in this browser until you configure and sign in to your own project.</p>
+      <p class="fine-print">Use only a public/publishable key here, never a secret or service-role key. The sign-in link goes directly from Supabase to your email; do not share it or any OTP with me. Existing local proposals are not uploaded automatically.</p>
+    </section>
+    <section class="panel approval-panel">
       <div class="panel-head"><div><p class="eyebrow">OWNER CONTROL</p><h2>Action approval queue</h2><p class="panel-copy">Use this for products, supplier enquiries, customer messages, orders, subscriptions and other commitments. Approval records your decision only; it does not publish, send, order or pay.</p></div><span class="approval-badge">Nothing executes here</span></div>
       <form id="actionForm" class="spend-form">
         <label>Proposed action<select id="actionType" required><option>Product / catalogue proposal</option><option>Supplier contact</option><option>Customer commitment</option><option>Order / fulfilment</option><option>Payment / purchase</option><option>Subscription / service</option><option>Marketing / advertising</option><option>Other</option></select></label>
