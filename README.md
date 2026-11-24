@@ -37,7 +37,15 @@ Add proposals to the action queue and review them before taking any real-world s
 
 A Supabase Postgres schema is prepared in `supabase/schema.sql`. It creates an authenticated, row-level-secured queue: each signed-in user can access only their own proposals. Approvals remain records only and have no external side effects.
 
-The dashboard includes optional Supabase connection settings. To activate them, the owner must create a Supabase project, review and accept the provider's terms, apply this SQL, and enter the project URL and publishable key in the dashboard. Then use the email sign-in link. The email link goes directly from Supabase to the owner; no password or OTP is needed in this chat. Never place a Supabase secret or service-role key in browser code. Existing local proposals are not uploaded automatically.
+The dashboard includes optional Supabase connection settings. To activate them:
+
+1. Create a Supabase project on the Free plan and review/accept the provider's terms yourself.
+2. Run `supabase/schema.sql` in the project's SQL editor.
+3. In Supabase Auth URL settings, set the Site URL and allowed redirect URL to `https://zacharieyab-prog.github.io/zakie-commerce/`.
+4. In the dashboard's **Connect your approval queue** section, enter the project's HTTPS URL and publishable key, then save.
+5. Enter your email and request a sign-in link. Open the link yourself. The link is sent directly by Supabase; no password or OTP is needed in this chat.
+
+Only proposals entered while signed in go to Supabase. Existing local proposals are not uploaded automatically. The URL and publishable key are stored in this browser's local storage; the publishable key is public by design and protected by RLS. Never use a Supabase secret or service-role key in browser code.
 
 Supabase currently advertises a $0 Free plan with database and Auth quotas. Free projects may pause after one week of inactivity, and automatic backups are not included. Quotas and terms can change; remain on Free and keep spending at R0 unless the owner explicitly approves a paid plan. See [Supabase pricing](https://supabase.com/pricing) and [Row Level Security guidance](https://supabase.com/docs/guides/database/postgres/row-level-security).
 
